@@ -1,4 +1,3 @@
-import numpy as np
 import copy as cp
 
 description  = "Welcome to Carlos Gomez's 8-puzzle solver.\n"
@@ -8,14 +7,22 @@ description += '\tEnter the first row, use space or tabs between numbers'
 
 """
 function general-search(problem, QUEUEING-FUNCTION)
-nodes = MAKE-QUEUE(MAKE-NODE(problem.INITIAL-STATE))
-loop do
-    if EMPTY(nodes) then return "failure"
-    node = REMOVE-FRONT(nodes)
-    if problem.GOAL-TEST(node.STATE) succeeds then return node
-    nodes = QUEUEING-FUNCTION(nodes, EXPAND(node, problem.OPERATORS))
-end
+    nodes = MAKE-QUEUE(MAKE-NODE(problem.INITIAL-STATE))
+    loop do
+        if EMPTY(nodes) then return "failure"
+        node = REMOVE-FRONT(nodes)
+        if problem.GOAL-TEST(node.STATE) succeeds then return node
+        nodes = QUEUEING-FUNCTION(nodes, EXPAND(node, problem.OPERATORS))
+    end
 """
+class Node:
+    
+    def __init__(self, state):
+        self.state = state
+
+    def get_state(self):
+        return self.state
+
 class Problem:
 
     def __init__(self, input_array):
@@ -23,9 +30,15 @@ class Problem:
         self.map_attempts = set()
         self.goal_state = [1,2,3,4,5,6,7,8,0]
 
-
     def goal_test(self):
         return self.goal_state == self.input_array
+
+    def diff_test(self):
+        total_diff = 0
+        for goal_val, input_val in zip(self.goal_state, self.input_array):
+            if goal_val != input_val:
+                total_diff += 1
+        return total_diff
 
     def test_attempt(self, node_state):
         if node_state in self.map_attempts:
@@ -41,6 +54,7 @@ class Problem:
     def operators(self):
         operator_list = list()
         zero_index = self.find_blank()
+        
         # Move up allowed
         if zero_index > 2:
             operator_list.append(self.move_up(zero_index))
@@ -68,6 +82,7 @@ class Problem:
         down_list = cp.deepcopy(self.input_array)
         down_list[index], down_list[index+3] = down_list[index+3], down_list[index]
         return down_list
+
     def move_left(self, index):
         left_list = cp.deepcopy(self.input_array)
         left_list[index], left_list[index-1] = left_list[index-1], left_list[index]
@@ -81,6 +96,8 @@ class Problem:
     def state(self):
         return self.input_array
 
+def uniform(nodes, new_nodes):
+    pass
 
 def expand(node, problem_operators):
     new_nodes = list()
