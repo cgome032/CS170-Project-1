@@ -22,7 +22,7 @@ class Node:
         self.state = state
 
     def __repr__(self):
-        return self.state
+        return str(self.state)
 
     def get_state(self):
         return self.state
@@ -34,6 +34,7 @@ class Problem:
         self.initial_state = initial_state
         self.map_attempts = set()
         self.goal_state = [1,2,3,4,5,6,7,8,0]
+        self.test_attempt(self.initial_state)
 
     def goal_test(self, node_state):
         return self.goal_state == node_state
@@ -88,22 +89,22 @@ class Problem:
         return operator_list
 
     def move_up(self, index, curr_state):
-        up_list = cp.deepcopy(self.initial_state)
+        up_list = cp.deepcopy(curr_state)
         up_list[index], up_list[index-3] = up_list[index-3], up_list[index]
         return up_list
 
     def move_down(self, index, curr_state):
-        down_list = cp.deepcopy(self.initial_state)
+        down_list = cp.deepcopy(curr_state)
         down_list[index], down_list[index+3] = down_list[index+3], down_list[index]
         return down_list
 
     def move_left(self, index, curr_state):
-        left_list = cp.deepcopy(self.initial_state)
+        left_list = cp.deepcopy(curr_state)
         left_list[index], left_list[index-1] = left_list[index-1], left_list[index]
         return left_list
 
     def move_right(self, index, curr_state):
-        right_list = cp.deepcopy(self.initial_state)
+        right_list = cp.deepcopy(curr_state)
         right_list[index], right_list[index+1] = right_list[index+1], right_list[index]
         return right_list
 
