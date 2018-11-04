@@ -1,21 +1,13 @@
 import copy as cp
 import queue
+import time
 
-description  = "Welcome to Carlos Gomez's 8-puzzle solver.\n"
-description += 'Type "1" to use a default puzzle, or "2" to enter your own puzzle.\n'
-description += '\tEnter your puzzle, use a zero to represent the blank'
-description += '\tEnter the first row, use space or tabs between numbers'
-
-"""
-function general-search(problem, QUEUEING-FUNCTION)
-    nodes = MAKE-QUEUE(MAKE-NODE(problem.INITIAL-STATE))
-    loop do
-        if EMPTY(nodes) then return "failure"
-        node = REMOVE-FRONT(nodes)
-        if problem.GOAL-TEST(node.STATE) succeeds then return node
-        nodes = QUEUEING-FUNCTION(nodes, EXPAND(node, problem.OPERATORS))
-    end
-"""
+def startProject():
+    description  = "Welcome to Carlos Gomez's 8-puzzle solver.\n"
+    description += 'Type "1" to use a default puzzle, or "2" to enter your own puzzle.\n'
+    description += '\tEnter your puzzle, use a zero to represent the blank'
+    description += '\tEnter the first row, use space or tabs between numbers'
+    
 class Node:
     
     def __init__(self, state):
@@ -27,6 +19,14 @@ class Node:
     def get_state(self):
         return self.state
     
+    def set_fn(self, fn):
+        self.fn = fn
+
+    def get_fn(self):
+        return self.fn
+    
+    def __lt__(self, otherNode):
+        return self.fn < otherNode.fn
 
 class Problem:
 
@@ -114,13 +114,58 @@ class Problem:
 def uniform(nodes, new_nodes):
     newQueue = nodes
     for node in new_nodes:
+        node.set_fn(1)
         newQueue.put(node)
     return newQueue
 
+def manhattan_distance(test_state):
+    goal_state = [1,2,3,4,5,6,7,8,0]
+    total_distance = 0
+    for index, (test,goal) in enumerate(zip(test_state,goal_state)):
+        if test == goal or test == 0:
+            continue
+        else:
+            test_row = (test-1) // 3
+            test_col = (test-1) % 3
+
+            index_row = index // 3
+            index_col = index % 3
+
+            abs_diff = abs(test_row - index_row) + abs(test_col - index_col)
+            total_distance += abs_diff
+
+    return total_distance
+
+def a_star_search_manhattan(nodes, new_nodes):
+    prioQueue = nodes
+    for node in new_nodes:
+        man_distance = manhattan_distance(node.get_state())
+        node.set_fn(man_distance)
+        prioQueue.put(node)
+    return prioQueue
+
+def misplaced_distance(test_state):
+    goal_state = [1,2,3,4,5,6,7,8,0]
+    mis_distance = 0
+    for test,goal in zip(test_state, goal_state):
+        if test == 0:
+            continue
+        if test != goal:
+            mis_distance += 1
+    return mis_distance
+
+def a_star_search_misplaced(nodes, new_nodes):
+    prioQueue = nodes
+    for node in new_nodes:
+        mis_distance = misplaced_distance(node.get_state())
+        node.set_fn(mis_distance)
+        prioQueue.put(node)
+    return prioQueue
 
 def general_search(problem, q_function):
-    nodes = queue.Queue()
+    nodes = queue.PriorityQueue()
     first_node = Node(problem.state())
+    first_node.set_fn(0)
     nodes.put(first_node)
 
     while(1):
@@ -140,7 +185,11 @@ def tile_print(input_list):
     print()
 
 if __name__ == '__main__':
-    test_val = [1, 2, 3, 4, 0, 6, 7, 5, 8]
+    test_val = [8, 7, 1, 6, 0, 2, 5, 4, 3]
     test = Problem(test_val)
+    """
     node = general_search(test, uniform)
     print(node)
+    """
+    node = general_search(test, a_star_search_misplaced)
+    print(node) 
