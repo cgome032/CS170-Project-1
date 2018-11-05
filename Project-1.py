@@ -3,8 +3,8 @@ import queue
 import time
 import sys
 
-def startProject():
-    default_puzzle = [1,2,3,4,0,6,7,5,8]
+def startProject(puzzle):
+    default_puzzle = puzzle
     description1  = "Welcome to Carlos Gomez's 8-puzzle solver.\n"
     description1 += 'Type "1" to use a default puzzle, or "2" to enter your own puzzle.'
     print(description1)
@@ -274,4 +274,6 @@ def tile_print(input_node):
     print()
 
 if __name__ == '__main__':
-    startProject()
+    puzzles = [[1,2,3,4,5,6,7,8,0],[1,2,3,4,5,6,7,0,8],[1,2,0,4,5,3,7,8,6],[0,1,2,4,5,3,7,8,6],[8,7,1,6,0,2,5,4,3],[1,2,3,4,5,6,8,7,0]]
+    for puzzle in puzzles:
+        startProject(puzzle)
