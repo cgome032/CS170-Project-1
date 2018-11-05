@@ -45,7 +45,10 @@ def startProject():
     alg_input = str(input("\t\t"))
 
     input_dict = {'1':uniform, '2':a_star_search_misplaced, '3':a_star_search_manhattan}
+    start = time.time()
     node = general_search(problem, input_dict[alg_input])
+    end = time.time()
+    print("Time to finish: {}".format(end-start))
     return node
 
 
@@ -271,7 +274,4 @@ def tile_print(input_node):
     print()
 
 if __name__ == '__main__':
-    start = time.time()
     startProject()
-    end = time.time()
-    print("Time to finish: {}".format(end-start))
