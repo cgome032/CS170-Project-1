@@ -1,13 +1,54 @@
 import copy as cp
 import queue
 import time
+import sys
 
 def startProject():
-    description  = "Welcome to Carlos Gomez's 8-puzzle solver.\n"
-    description += 'Type "1" to use a default puzzle, or "2" to enter your own puzzle.\n'
-    description += '\tEnter your puzzle, use a zero to represent the blank'
-    description += '\tEnter the first row, use space or tabs between numbers'
+    default_puzzle = [1,2,3,4,0,6,7,5,8]
+    description1  = "Welcome to Carlos Gomez's 8-puzzle solver.\n"
+    description1 += 'Type "1" to use a default puzzle, or "2" to enter your own puzzle.'
+    print(description1)
+    option_puzzle = int(input())
+
+    puzzle = []
+
+    if option_puzzle == 1:
+        puzzle = default_puzzle
+        
+
+    elif option_puzzle == 2:
+        description_init = '\tEnter your puzzle, use a zero to represent the blank'
+        print(description_init)
+
+        description_1stR = '\tEnter the first row, use space or tabs between numbers\t\t'
+        description_2ndR = '\tEnter the second row, use space or tabs between numbers\t\t'
+        description_3rdR = '\tEnter the third row, use space or tabs between numbers\t\t'
+        entry_puzzle  = [int(x) for x in input(description_1stR).split()]
+        entry_puzzle += [int(x) for x in input(description_2ndR).split()]
+        entry_puzzle += [int(x) for x in input(description_3rdR).split()]
+        
+        puzzle = entry_puzzle
+
+    else:
+        print("Please select an option")
+        sys.exit(0)
+
+    problem = Problem(puzzle)
+        
+    alg_description  = "\tEnter your choice of algorithm\n"
+    alg_description += "\t\t1. Uniform Cost Search\n"
+    alg_description += "\t\t2. A* with the Misplaced Tile heuristic\n"
+    alg_description += "\t\t3. A* with the Manhattan distance heuristic\n"
+
+    print(alg_description)
     
+    alg_input = str(input("\t\t"))
+
+    input_dict = {'1':uniform, '2':a_star_search_misplaced, '3':a_star_search_manhattan}
+    node = general_search(problem, input_dict[alg_input])
+    return node
+
+
 class Node:
     
     def __init__(self, state):
@@ -18,6 +59,18 @@ class Node:
 
     def get_state(self):
         return self.state
+
+    def set_gn(self, gn):
+        self.gn = gn
+    
+    def get_gn(self):
+        return self.gn
+
+    def set_hn(self, hn):
+        self.hn = hn
+
+    def get_hn(self):
+        return self.hn
     
     def set_fn(self, fn):
         self.fn = fn
@@ -35,6 +88,7 @@ class Problem:
         self.map_attempts = set()
         self.goal_state = [1,2,3,4,5,6,7,8,0]
         self.test_attempt(self.initial_state)
+        self.node_count = 0
 
     def goal_test(self, node_state):
         return self.goal_state == node_state
@@ -45,6 +99,9 @@ class Problem:
             if goal_val != input_val:
                 total_diff += 1
         return total_diff
+
+    def get_node_count(self):
+        return self.node_count
 
     def test_attempt(self, node_state):
         if tuple(node_state) in self.map_attempts:
@@ -58,31 +115,37 @@ class Problem:
             if value == 0:
                 return index
 
-    def operators(self, curr_state):
+    def operators(self, input_node):
+        self.node_count += 1
+        curr_state = input_node.get_state()
         operator_list = list()
         zero_index = self.find_blank(curr_state)
         
         # Move up allowed
         if zero_index > 2:
             up_node = Node(self.move_up(zero_index, curr_state))
+            up_node.set_gn(input_node.get_gn()+1)
             if self.test_attempt(up_node.get_state()):
                 operator_list.append(up_node)
 
         # Move down allowed
         if zero_index < 6:
             down_node = Node(self.move_down(zero_index, curr_state))
+            down_node.set_gn(input_node.get_gn()+1)
             if self.test_attempt(down_node.get_state()):
                 operator_list.append(down_node)
 
         # Move left allowed
         if zero_index % 3 > 0:
             left_node = Node(self.move_left(zero_index, curr_state))
+            left_node.set_gn(input_node.get_gn()+1)
             if self.test_attempt(left_node.get_state()):
                 operator_list.append(left_node)
 
         # Move right allowed
         if zero_index % 3 < 2:
             right_node = Node(self.move_right(zero_index, curr_state))
+            right_node.set_gn(input_node.get_gn()+1)
             if self.test_attempt(right_node.get_state()):
                 operator_list.append(right_node)
         
@@ -112,11 +175,13 @@ class Problem:
         return self.initial_state
 
 def uniform(nodes, new_nodes):
-    newQueue = nodes
+    prioQueue = nodes
     for node in new_nodes:
-        node.set_fn(1)
-        newQueue.put(node)
-    return newQueue
+        node.set_hn(0)
+        curr_gn = node.get_gn()
+        node.set_fn(curr_gn + 0)
+        prioQueue.put(node)
+    return prioQueue
 
 def manhattan_distance(test_state):
     goal_state = [1,2,3,4,5,6,7,8,0]
@@ -140,7 +205,9 @@ def a_star_search_manhattan(nodes, new_nodes):
     prioQueue = nodes
     for node in new_nodes:
         man_distance = manhattan_distance(node.get_state())
-        node.set_fn(man_distance)
+        node.set_hn(man_distance)
+        curr_gn = node.get_gn()
+        node.set_fn(curr_gn + man_distance)
         prioQueue.put(node)
     return prioQueue
 
@@ -158,38 +225,53 @@ def a_star_search_misplaced(nodes, new_nodes):
     prioQueue = nodes
     for node in new_nodes:
         mis_distance = misplaced_distance(node.get_state())
-        node.set_fn(mis_distance)
+        node.set_hn(mis_distance)
+        curr_gn = node.get_gn()
+        node.set_fn(curr_gn + mis_distance)
         prioQueue.put(node)
     return prioQueue
 
 def general_search(problem, q_function):
     nodes = queue.PriorityQueue()
     first_node = Node(problem.state())
+    first_node.set_gn(0)
+    first_node.set_hn(0)
     first_node.set_fn(0)
     nodes.put(first_node)
+    print("Expanding state")
+    tile_print(first_node)
 
+    maxQueueSize = nodes.qsize()
     while(1):
         if nodes.empty():
             return "failure"
         node = nodes.get()
-        tile_print(node.get_state())
         if problem.goal_test(node.get_state()):
+            print("Goal!!")
+            print("To solve this problem the search algorithm expanded a total of {node_total} nodes".format(node_total = problem.get_node_count()))
+            print("The maximum number of nodes in the queue at any one time was {max_queue_nodes}.".format(max_queue_nodes=maxQueueSize))
+            print("The depth of the goal node was {depth}".format(depth=node.get_gn()))
             return node
-        nodes = q_function(nodes, problem.operators(node.get_state()))
+        print("The best state to expand with a g(n) = {gn} and h(n) = {hn} is ...".format(gn=node.get_gn(), hn=node.get_hn()))
+        tile_print(node)
+        nodes = q_function(nodes, problem.operators(node))
+        # Check for max queue size
+        trySize = nodes.qsize()
+        if trySize > maxQueueSize:
+            maxQueueSize = trySize
 
-def tile_print(input_list):
-    for index, tile in enumerate(input_list):
-        print(tile, end=' ')
+def tile_print(input_node):
+    for index, tile in enumerate(input_node.get_state()):
+        if tile == 0:
+            print("b", end=' ')
+        else:
+            print(tile, end=' ')
         if index % 3 == 2:
             print()
     print()
 
 if __name__ == '__main__':
-    test_val = [8, 7, 1, 6, 0, 2, 5, 4, 3]
-    test = Problem(test_val)
-    """
-    node = general_search(test, uniform)
-    print(node)
-    """
-    node = general_search(test, a_star_search_misplaced)
-    print(node) 
+    start = time.time()
+    startProject()
+    end = time.time()
+    print("Time to finish: {}".format(end-start))
